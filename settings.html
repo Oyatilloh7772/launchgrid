@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Настройки — LaunchGrid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="nav-mount"></div>
+
+<main>
+  <section>
+    <div class="container">
+      <div class="section-head"><div><h2>Настройки</h2><p>Профиль бизнеса и тарифный план</p></div></div>
+
+      <div class="grid grid-2" style="align-items:flex-start;">
+        <div class="card">
+          <h3 style="font-size:16px;margin-bottom:16px;">Профиль</h3>
+          <div class="field"><label for="s-business">Название бизнеса</label><input class="input" id="s-business"></div>
+          <div class="field"><label for="s-email">Email</label><input class="input" id="s-email" disabled></div>
+          <button class="btn btn-primary btn-block" id="save-profile">Сохранить</button>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size:16px;margin-bottom:16px;">Тарифный план</h3>
+          <div class="ledger" style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:700;">Free</div>
+              <div style="font-size:12px;color:var(--ink-faint);">До 30 товаров, 1 канал продаж</div>
+            </div>
+            <button class="btn btn-sm" id="plan-free-btn">Выбрать</button>
+          </div>
+          <div class="ledger" style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:700;">Business — 149 000 сум/мес</div>
+              <div style="font-size:12px;color:var(--ink-faint);">Telegram-бот, безлимит товаров, полная аналитика</div>
+            </div>
+            <button class="btn btn-sm" id="plan-business-btn">Выбрать</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <div class="brand" style="font-size:15px;"><span class="brand-mark" style="width:22px;height:22px;font-size:12px;">L</span>LaunchGrid</div>
+    <p>© 2026 LaunchGrid. Демо-версия, данные хранятся локально в браузере.</p>
+  </div>
+</footer>
+
+<script src="js/mock-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/app.js"></script>
+<script>
+let CURRENT_USER = null;
+
+function refreshPlanButtons() {
+  document.getElementById('plan-free-btn').className = `btn btn-sm ${CURRENT_USER.plan === 'free' ? 'btn-primary' : 'btn-ghost'}`;
+  document.getElementById('plan-free-btn').textContent = CURRENT_USER.plan === 'free' ? 'Текущий план' : 'Выбрать';
+  document.getElementById('plan-business-btn').className = `btn btn-sm ${CURRENT_USER.plan === 'business' ? 'btn-primary' : 'btn-ghost'}`;
+  document.getElementById('plan-business-btn').textContent = CURRENT_USER.plan === 'business' ? 'Текущий план' : 'Выбрать';
+}
+
+document.getElementById('save-profile').addEventListener('click', async () => {
+  const businessName = document.getElementById('s-business').value.trim();
+  await updateBusinessProfile(CURRENT_USER.id, { businessName });
+  showToast('Профиль обновлён', 'success');
+});
+
+document.getElementById('plan-free-btn').addEventListener('click', async () => {
+  await updatePlan(CURRENT_USER.id, 'free');
+  CURRENT_USER = await getCurrentUser();
+  refreshPlanButtons();
+  showToast('Вы на тарифе Free', 'success');
+});
+document.getElementById('plan-business-btn').addEventListener('click', async () => {
+  await updatePlan(CURRENT_USER.id, 'business');
+  CURRENT_USER = await getCurrentUser();
+  refreshPlanButtons();
+  showToast('Добро пожаловать на Business!', 'success');
+});
+
+(async () => {
+  CURRENT_USER = await requireAuth();
+  if (!CURRENT_USER) return;
+  await renderNav('settings');
+  document.getElementById('s-business').value = CURRENT_USER.businessName;
+  document.getElementById('s-email').value = CURRENT_USER.email;
+  refreshPlanButtons();
+})();
+</script>
+</body>
+</html>

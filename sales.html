@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Продажи — LaunchGrid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="nav-mount"></div>
+
+<main>
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div><h2>Продажи</h2><p>Записывайте продажи — остаток на складе спишется автоматически</p></div>
+      </div>
+
+      <div class="grid grid-2" style="align-items:flex-start;">
+        <div class="card">
+          <h3 style="font-size:16px;margin-bottom:16px;">Новая продажа</h3>
+          <div class="field">
+            <label for="sale-product">Товар</label>
+            <select class="input" id="sale-product"></select>
+          </div>
+          <div class="grid grid-2">
+            <div class="field"><label for="sale-qty">Количество</label><input class="input" type="number" id="sale-qty" value="1" min="1"></div>
+            <div class="field"><label for="sale-price">Цена за штуку (сум)</label><input class="input" type="number" id="sale-price"></div>
+          </div>
+          <div class="field">
+            <label for="sale-channel">Канал продажи</label>
+            <select class="input" id="sale-channel">
+              <option value="instagram">Instagram</option>
+              <option value="telegram">Telegram</option>
+              <option value="direct">Напрямую</option>
+              <option value="other">Другое</option>
+            </select>
+          </div>
+          <p style="font-size:12px;color:var(--ink-faint);margin-bottom:14px;" id="sale-stock-hint"></p>
+          <button class="btn btn-primary btn-block" id="sale-submit">Записать продажу</button>
+        </div>
+
+        <div>
+          <h3 style="font-size:16px;margin-bottom:16px;">История продаж</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Товар</th><th>Кол-во</th><th>Сумма</th><th>Канал</th><th>Когда</th></tr></thead>
+              <tbody id="sales-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <div class="brand" style="font-size:15px;"><span class="brand-mark" style="width:22px;height:22px;font-size:12px;">L</span>LaunchGrid</div>
+    <p>© 2026 LaunchGrid. Демо-версия, данные хранятся локально в браузере.</p>
+  </div>
+</footer>
+
+<script src="js/mock-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/app.js"></script>
+<script>
+let CURRENT_USER = null;
+let PRODUCTS = [];
+
+function updateStockHint() {
+  const p = PRODUCTS.find((x) => x.id === document.getElementById('sale-product').value);
+  const hint = document.getElementById('sale-stock-hint');
+  if (!p) { hint.textContent = ''; return; }
+  hint.textContent = `На складе: ${p.quantity} шт.`;
+  document.getElementById('sale-price').value = p.price;
+}
+
+async function loadProducts() {
+  PRODUCTS = await getProducts(CURRENT_USER.id);
+  const select = document.getElementById('sale-product');
+  if (!PRODUCTS.length) {
+    select.innerHTML = `<option value="">Сначала добавьте товар на складе</option>`;
+    return;
+  }
+  select.innerHTML = PRODUCTS.map((p) => `<option value="${p.id}">${p.name} (${p.quantity} шт.)</option>`).join('');
+  updateStockHint();
+}
+document.getElementById('sale-product').addEventListener('change', updateStockHint);
+
+async function loadSales() {
+  const sales = await getSales(CURRENT_USER.id);
+  const tbody = document.getElementById('sales-tbody');
+  if (!sales.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--ink-faint);padding:32px;">Продаж пока нет.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = sales.map((s) => `
+    <tr>
+      <td class="strong">${s.product?.name || 'Товар удалён'}</td>
+      <td>${s.quantity}</td>
+      <td class="mono">${formatMoney(s.quantity * s.unitPrice)}</td>
+      <td><span class="badge ${CHANNEL_META[s.channel].badge}"><span class="badge-dot"></span>${CHANNEL_META[s.channel].label}</span></td>
+      <td>${timeAgo(s.createdAt)}</td>
+    </tr>
+  `).join('');
+}
+
+document.getElementById('sale-submit').addEventListener('click', async () => {
+  const productId = document.getElementById('sale-product').value;
+  const quantity = Number(document.getElementById('sale-qty').value);
+  const unitPrice = Number(document.getElementById('sale-price').value);
+  const channel = document.getElementById('sale-channel').value;
+  if (!productId) { showToast('Выберите товар', 'error'); return; }
+  if (!quantity || quantity <= 0) { showToast('Укажите количество', 'error'); return; }
+  try {
+    await recordSale({ ownerId: CURRENT_USER.id, productId, quantity, unitPrice, channel });
+    showToast('Продажа записана', 'success');
+    document.getElementById('sale-qty').value = 1;
+    await loadProducts();
+    await loadSales();
+  } catch (err) { showToast(err.message, 'error'); }
+});
+
+(async () => {
+  CURRENT_USER = await requireAuth();
+  if (!CURRENT_USER) return;
+  await renderNav('sales');
+  await loadProducts();
+  await loadSales();
+})();
+</script>
+</body>
+</html>

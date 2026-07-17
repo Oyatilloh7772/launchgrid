@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Дашборд — LaunchGrid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="nav-mount"></div>
+
+<main>
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div><h2 id="greeting">Дашборд</h2><p>Как дела у вашего магазина сегодня</p></div>
+        <a href="sales.html" class="btn btn-primary">+ Записать продажу</a>
+      </div>
+
+      <div class="grid grid-4" id="stat-tiles" style="margin-bottom:32px;"></div>
+
+      <div class="grid grid-2">
+        <div>
+          <h3 style="font-size:16px;margin-bottom:14px;">Мало на складе</h3>
+          <div id="low-stock-list"></div>
+        </div>
+        <div>
+          <h3 style="font-size:16px;margin-bottom:14px;">Последние продажи</h3>
+          <div id="recent-sales-list"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <div class="brand" style="font-size:15px;"><span class="brand-mark" style="width:22px;height:22px;font-size:12px;">L</span>LaunchGrid</div>
+    <p>© 2026 LaunchGrid. Демо-версия, данные хранятся локально в браузере.</p>
+  </div>
+</footer>
+
+<script src="js/mock-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/app.js"></script>
+<script>
+(async () => {
+  const user = await requireAuth();
+  if (!user) return;
+  await renderNav('dashboard');
+  document.getElementById('greeting').textContent = `Привет, ${user.businessName}`;
+
+  const stats = await getDashboardStats(user.id);
+
+  document.getElementById('stat-tiles').innerHTML = `
+    <div class="stat-tile"><div class="num">${formatMoney(stats.revenueToday)}</div><div class="lbl">Выручка сегодня</div></div>
+    <div class="stat-tile"><div class="num">${stats.ordersToday}</div><div class="lbl">Продаж сегодня</div></div>
+    <div class="stat-tile"><div class="num">${stats.productsCount}</div><div class="lbl">Товаров на складе</div></div>
+    <div class="stat-tile"><div class="num">${formatMoney(stats.stockValue)}</div><div class="lbl">Стоимость склада</div></div>
+  `;
+
+  const lowStockMount = document.getElementById('low-stock-list');
+  if (!stats.lowStock.length) {
+    lowStockMount.innerHTML = `<div class="empty"><h3>Всё в порядке</h3><p>Ни один товар не заканчивается.</p></div>`;
+  } else {
+    lowStockMount.innerHTML = stats.lowStock.map((p) => `
+      <div class="ledger" style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+        <div class="prod-thumb" style="${thumbStyle(p.name)}">${initials(p.name)}</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:14px;">${p.name}</div>
+          <div style="font-size:12px;color:var(--ink-faint);">Остаток: ${p.quantity} шт.</div>
+        </div>
+        ${stockBadge(p)}
+      </div>
+    `).join('');
+  }
+
+  const salesMount = document.getElementById('recent-sales-list');
+  if (!stats.recentSales.length) {
+    salesMount.innerHTML = `<div class="empty"><h3>Продаж пока нет</h3><p>Запишите первую продажу на странице «Продажи».</p></div>`;
+  } else {
+    salesMount.innerHTML = stats.recentSales.map((s) => `
+      <div class="ledger" style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+        <div class="prod-thumb" style="${thumbStyle(s.product?.name || '?')}">${initials(s.product?.name || '?')}</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:14px;">${s.product?.name || 'Товар удалён'} × ${s.quantity}</div>
+          <div style="font-size:12px;color:var(--ink-faint);">${timeAgo(s.createdAt)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="mono" style="font-weight:700;font-size:14px;">${formatMoney(s.quantity * s.unitPrice)}</div>
+          <span class="badge ${CHANNEL_META[s.channel].badge}" style="margin-top:4px;"><span class="badge-dot"></span>${CHANNEL_META[s.channel].label}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+})();
+</script>
+</body>
+</html>

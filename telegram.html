@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Telegram-бот — LaunchGrid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="nav-mount"></div>
+
+<main>
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div><h2>Telegram-бот</h2><p>Проверяйте остатки и записывайте продажи прямо из чата</p></div>
+        <span class="badge badge-ok" id="plan-gate-badge"></span>
+      </div>
+
+      <div class="grid grid-2" style="align-items:flex-start;">
+        <div class="card">
+          <h3 style="font-size:16px;margin-bottom:16px;">Подключение бота</h3>
+          <div class="field">
+            <label for="bot-token">Токен бота (из @BotFather)</label>
+            <input class="input" id="bot-token" placeholder="123456:ABC-your-bot-token">
+          </div>
+          <div class="field">
+            <label for="chat-id">Ваш Telegram chat_id</label>
+            <input class="input" id="chat-id" placeholder="Например, 987654321">
+          </div>
+          <button class="btn btn-primary btn-block" id="save-telegram">Сохранить подключение</button>
+          <p style="font-size:12px;color:var(--ink-faint);margin-top:14px;">
+            Chat_id можно получить, написав боту <span class="mono">@userinfobot</span> в Telegram.
+          </p>
+        </div>
+
+        <div class="ledger">
+          <h3 style="font-size:16px;margin-bottom:14px;">Команды бота</h3>
+          <div class="field" style="margin-bottom:0;">
+            <p class="mono" style="font-size:13px;margin-bottom:10px;"><b>/stock</b> — список товаров и остатков</p>
+            <p class="mono" style="font-size:13px;margin-bottom:10px;"><b>/sale Ваза_S 1 129000</b> — записать продажу (товар, кол-во, цена)</p>
+            <p class="mono" style="font-size:13px;margin-bottom:10px;"><b>/report</b> — выручка и продажи за сегодня</p>
+          </div>
+          <p style="font-size:13px;color:var(--ink-dim);margin-top:14px;">
+            Бот читает и пишет в те же таблицы, что и веб-кабинет — данные всегда синхронны.
+          </p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:24px;">
+        <h3 style="font-size:16px;margin-bottom:14px;">Как это работает технически</h3>
+        <p style="font-size:14px;color:var(--ink-dim);">
+          Webhook-обработчик разворачивается как Supabase Edge Function и получает апдейты от Telegram
+          Bot API. Пример кода на Deno — в комментарии внизу файла <span class="mono">js/supabase.js</span>.
+          После публикации функции укажите её URL как webhook через метод <span class="mono">setWebhook</span> Telegram Bot API.
+        </p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <div class="brand" style="font-size:15px;"><span class="brand-mark" style="width:22px;height:22px;font-size:12px;">L</span>LaunchGrid</div>
+    <p>© 2026 LaunchGrid. Демо-версия, данные хранятся локально в браузере.</p>
+  </div>
+</footer>
+
+<script src="js/mock-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/app.js"></script>
+<script>
+let CURRENT_USER = null;
+
+document.getElementById('save-telegram').addEventListener('click', async () => {
+  const botToken = document.getElementById('bot-token').value.trim();
+  const chatId = document.getElementById('chat-id').value.trim();
+  await saveTelegramSettings(CURRENT_USER.id, { botToken, chatId });
+  showToast('Настройки Telegram сохранены', 'success');
+});
+
+(async () => {
+  CURRENT_USER = await requireAuth();
+  if (!CURRENT_USER) return;
+  await renderNav('telegram');
+
+  document.getElementById('bot-token').value = CURRENT_USER.telegramBotToken || '';
+  document.getElementById('chat-id').value = CURRENT_USER.telegramChatId || '';
+
+  const badge = document.getElementById('plan-gate-badge');
+  badge.className = `badge ${PLAN_META[CURRENT_USER.plan].badge}`;
+  badge.innerHTML = `<span class="badge-dot"></span>${CURRENT_USER.plan === 'business' ? 'Доступно на вашем тарифе' : 'Доступно на Business'}`;
+})();
+</script>
+</body>
+</html>
