@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LaunchGrid — учёт остатков и продаж для Instagram/Telegram-магазинов</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <!-- Стили теперь в корне -->
+    <title>LaunchGrid</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,42 +11,21 @@
 <div id="nav-mount"></div>
 
 <main>
-  <section class="hero">
-    <div class="container">
-      <div class="hero-eyebrow">LAUNCHGRID · УЧЁТ ДЛЯ INSTAGRAM И TELEGRAM-МАГАЗИНОВ</div>
-      <h1>Тетрадь для учёта, только она сама всё считает.</h1>
-      <p class="lead">Остатки, продажи и прибыль — в одном месте. Никаких сложных таблиц:
-        интерфейс такой же простой, как обычная тетрадь, но данные синхронизируются
-        мгновенно между сайтом и Telegram-ботом.</p>
-      <div class="hero-actions">
-        <a href="auth.html?mode=signup" class="btn btn-primary">Начать бесплатно</a>
-        <a href="#pricing" class="btn btn-ghost">Смотреть тарифы</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Остальной контент без изменений -->
+    <section class="hero">
+        <div class="container">
+            <h1>Тетрадь для учёта, только она сама всё считает.</h1>
+            <p>Остатки, продажи и прибыль — в одном месте.</p>
+            <div class="hero-actions">
+                <a href="auth.html?mode=signup" class="btn btn-primary">Начать бесплатно</a>
+            </div>
+        </div>
+    </section>
 </main>
 
-<footer>
-  <div class="container footer-inner">
-    <div class="brand" style="font-size:15px;"><span class="brand-mark" style="width:22px;height:22px;font-size:12px;">L</span>LaunchGrid</div>
-    <p>© 2026 LaunchGrid. Демо-версия.</p>
-  </div>
-</footer>
-
-<!-- Скрипты теперь лежат в папке js/ -->
+<!-- Проверь, чтобы эти файлы реально лежали в папке js/ -->
 <script src="js/mock-data.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script src="js/app.js"></script>
-(async () => {
-  // Проверяем, существует ли функция renderNav перед вызовом
-  if (typeof renderNav === 'function') {
-    const user = await renderNav('index');
-    if (user) window.location.href = 'dashboard.html';
-  }
-})();
-</script>
 </body>
 </html>
