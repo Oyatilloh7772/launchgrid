@@ -9,9 +9,9 @@
      4) Выполните SQL-схему внизу файла в SQL Editor проекта.
    ========================================================================= */
 
-const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_PUBLISHABLE_OR_ANON_KEY';
-const USE_MOCKS = true;
+const SUPABASE_URL = https://paeipdqlwaxtsriwgjjk.supabase.co/rest/v1/;
+const SUPABASE_ANON_KEY = sb_publishable_Gx3foPgEAfrcF8caazmpRA_ccSTpGqu;
+const USE_MOCKS = false;
 
 let supabaseClient = null;
 if (!USE_MOCKS && window.supabase) {
